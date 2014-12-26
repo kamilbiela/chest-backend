@@ -1,18 +1,48 @@
 package main
 
 import (
-	"github.com/gorilla/pat"
-	"github.com/turbogopher/chest-backend/httphandler"
+	"flag"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/justinas/alice"
+	"github.com/kamilbiela/chest-backend/httphandler"
+	"github.com/kamilbiela/chest-backend/lib"
 )
 
-func main() {
-	container := NewContainer()
+var isSetup bool
 
-	r := pat.New()
-	r.Get("/", httphandler.Index(container.Config()))
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir("./../chest-frontend/")))
+func init() {
+	flag.BoolVar(&isSetup, "setup", false, "--setup to run app setup (insert sql into db)")
+	flag.Parse()
+}
+
+func main() {
+	container := lib.NewContainer()
+
+	log.Println(isSetup)
+
+	if isSetup {
+		setup(container)
+	} else {
+		startApp(container)
+	}
+}
+
+func startApp(container *lib.Container) {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	auth := container.Auth()
+
+	r := mux.NewRouter()
+
+	defaultChain := alice.New(auth.Middleware)
+
+	r.Handle("/login/github", httphandler.LoginGithubHandler(container))
+	r.Handle("/login/github/authorized", httphandler.LoginGithubAcceptedHandler(container))
+	r.Handle("/api/project", defaultChain.Then(httphandler.ProjectHandler(container)))
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../chest-frontend/")))
 
 	http.Handle("/", r)
 

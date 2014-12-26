@@ -1,0 +1,20 @@
+<Config>
+    <HTTPAddress>0.0.0.0:3000</HTTPAddress>
+    <WWWDir>/../chest-frontend</WWWDir>
+    <Github>
+        <ClientID></ClientID>
+        <ClientSecret></ClientSecret>
+        <AllowedOrganization>org1</AllowedOrganization>
+        <AllowedOrganization>org2</AllowedOrganization>
+    </Github>
+    <MySQL>
+        <DSN>root@/chest</DSN>
+    </MySQL>
+    <Cache>
+      <Strategy>memcache</Strategy>
+      <Memcache>
+        <Host>127.0.0.1:11211</Host>
+      </Memcache>
+    </Cache>
+    <Secret>Thisissomesecret</Secret>
+</Config>
