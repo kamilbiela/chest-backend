@@ -1,6 +1,7 @@
 package httphandler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 
 func LoginGithubHandler(c *lib.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		config := c.GetGithubOauth2Config()
+		config := c.GithubOauth2Config()
 
 		code := c.Auth().RandStr()
 
@@ -37,15 +38,26 @@ func LoginGithubAcceptedHandler(container *lib.Container) http.Handler {
 			log.Println("Invalid state")
 		}
 
-		config := container.GetGithubOauth2Config()
+		config := container.GithubOauth2Config()
 		tok, err := config.Exchange(oauth2.NoContext, vars.Get("code"))
 		if err != nil {
-			log.Fatal(err)
+			fmt.Fprint(w, err)
+			return
 		}
 
 		client := github.NewClient(config.Client(oauth2.NoContext, tok))
-		if canAccessSite(container, client) {
+		can, err := canAccessSite(container, client)
 
+		if err != nil {
+			// @todo - print nice html error page with redirect button to login page, or maybe redirect with error message to angular app
+			fmt.Fprint(w, "<html><body>")
+			fmt.Fprint(w, err)
+			fmt.Fprint(w, "<br><a href='/'>Go Back</a>")
+			fmt.Fprint(w, "</body></html>")
+			return
+		}
+
+		if can {
 			token, err := container.Auth().GenToken()
 
 			if err != nil {
@@ -53,27 +65,27 @@ func LoginGithubAcceptedHandler(container *lib.Container) http.Handler {
 			}
 
 			// @todo get current domain from request
-			url := "http://localhost:3000/#auth?token=" + token.Val
+			url := "http://localhost:3000/#/auth?token=" + token.Val
 			http.Redirect(w, r, url, 302)
 		}
 	})
 }
 
-func canAccessSite(container *lib.Container, client *github.Client) bool {
+func canAccessSite(container *lib.Container, client *github.Client) (bool, error) {
 	orgs, _, err := client.Organizations.List("", nil)
 
 	if err != nil {
 		log.Println(err)
-		return false
+		return false, err
 	}
 
 	for _, org := range orgs {
 		for _, allowedOrg := range container.Config().Github.AllowedOrganizations {
 			if org.Login != nil && *org.Login == allowedOrg {
-				return true
+				return true, nil
 			}
 		}
 	}
 
-	return false
+	return false, nil
 }

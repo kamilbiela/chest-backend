@@ -9,16 +9,18 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/kamilbiela/chest-backend/cache"
+	"github.com/kamilbiela/chest-backend/dbmapper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
 
 type Container struct {
-	config       *Config
-	sessionStore sessions.Store
-	db           *sql.DB
-	cache        cache.Cacher
-	auth         *Auth
+	config        *Config
+	sessionStore  sessions.Store
+	db            *sql.DB
+	cache         cache.Cacher
+	auth          *Auth
+	projectMapper *dbmapper.ProjectMapper
 }
 
 func NewContainer() *Container {
@@ -32,7 +34,7 @@ func (c *Container) Config() *Config {
 	return c.config
 }
 
-func (c *Container) GetGithubOauth2Config() *oauth2.Config {
+func (c *Container) GithubOauth2Config() *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     c.config.Github.ClientID,
 		ClientSecret: c.config.Github.ClientSecret,
@@ -87,4 +89,12 @@ func (c *Container) Auth() *Auth {
 	}
 
 	return c.auth
+}
+
+func (c *Container) ProjectMapper() *dbmapper.ProjectMapper {
+	if c.projectMapper == nil {
+		c.projectMapper = dbmapper.NewProjectMapper()
+	}
+
+	return c.projectMapper
 }

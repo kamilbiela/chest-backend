@@ -37,3 +37,12 @@ func (m *Memcache) Get(key string) ([]byte, error) {
 
 	return i.Value, nil
 }
+
+func (m *Memcache) Ping() error {
+	_, err := m.mc.Get("whatever")
+	if err == memcache.ErrCacheMiss {
+		return nil
+	}
+
+	return err
+}

@@ -25,6 +25,7 @@ type Config struct {
 			Hosts []string `xml:",any"`
 		}
 	}
+	Secret string
 }
 
 func NewConfig() *Config {

@@ -6,8 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/justinas/alice"
-	"github.com/kamilbiela/chest-backend/httphandler"
 	"github.com/kamilbiela/chest-backend/lib"
 )
 
@@ -31,23 +29,29 @@ func main() {
 }
 
 func startApp(container *lib.Container) {
+	var err error
+
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	auth := container.Auth()
+	db := container.Database()
+	err = db.Ping()
+	if err != nil {
+		log.Println("Can't connect to database")
+		log.Fatalln(err)
+	}
 
-	r := mux.NewRouter()
+	cache := container.Cache()
+	err = cache.Ping()
+	if err != nil {
+		log.Println("Can't connect to " + container.Config().Cache.Strategy)
+		log.Fatalln(err)
+	}
 
-	defaultChain := alice.New(auth.Middleware)
-
-	r.Handle("/login/github", httphandler.LoginGithubHandler(container))
-	r.Handle("/login/github/authorized", httphandler.LoginGithubAcceptedHandler(container))
-	r.Handle("/api/project", defaultChain.Then(httphandler.ProjectHandler(container)))
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../chest-frontend/")))
-
+	r := setupRouter(container, mux.NewRouter())
 	http.Handle("/", r)
 
 	log.Println("Listenig on" + container.Config().HTTPAddress)
-	err := http.ListenAndServe(container.Config().HTTPAddress, r)
+	err = http.ListenAndServe(container.Config().HTTPAddress, r)
 	if err != nil {
 		log.Fatalln(err)
 	}
