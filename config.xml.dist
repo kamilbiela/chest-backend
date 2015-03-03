@@ -1,11 +1,11 @@
 <Config>
     <HTTPAddress>0.0.0.0:3000</HTTPAddress>
-    <WWWDir>/../chest-frontend</WWWDir>
+    <WWWDir>../chest-frontend</WWWDir>
     <Github>
-        <ClientID></ClientID>
-        <ClientSecret></ClientSecret>
-        <AllowedOrganization>org1</AllowedOrganization>
-        <AllowedOrganization>org2</AllowedOrganization>
+        <ClientID>...</ClientID>
+        <ClientSecret>...</ClientSecret>
+        <AllowedOrganization>TESTORGANIZATION1</AllowedOrganization>
+        <AllowedOrganization>TESTORGANIZATION2</AllowedOrganization>
     </Github>
     <MySQL>
         <DSN>root@/chest</DSN>
@@ -16,5 +16,11 @@
         <Host>127.0.0.1:11211</Host>
       </Memcache>
     </Cache>
+	<Storage>
+	  <Strategy>local</Strategy>
+	  <Local>
+	    <Dir>uploads</Dir>
+	  </Local>
+	</Storage>
     <Secret>Thisissomesecret</Secret>
 </Config>

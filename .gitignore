@@ -1,4 +1,6 @@
 /chest-backend
+/uploads
+
 config.xml
 *.swp
 

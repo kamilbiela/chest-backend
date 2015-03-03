@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/kamilbiela/chest-backend/cache"
 	"github.com/kamilbiela/chest-backend/dbmapper"
+	"github.com/kamilbiela/chest-backend/storage"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 )
@@ -19,6 +20,7 @@ type Container struct {
 	sessionStore  sessions.Store
 	db            *sql.DB
 	cache         cache.Cacher
+	storage       storage.Manager
 	auth          *Auth
 	projectMapper *dbmapper.ProjectMapper
 }
@@ -85,7 +87,7 @@ func (c *Container) Cache() cache.Cacher {
 
 func (c *Container) Auth() *Auth {
 	if c.auth == nil {
-		c.auth = NewAuth(c.Cache())
+		c.auth = NewAuth(c.Cache(), c.Config().Secret)
 	}
 
 	return c.auth
@@ -97,4 +99,13 @@ func (c *Container) ProjectMapper() *dbmapper.ProjectMapper {
 	}
 
 	return c.projectMapper
+}
+
+func (c *Container) Storage() storage.Manager {
+
+	if c.storage == nil {
+		c.storage = storage.NewLocal(c.Config().Storage.Local.Dir)
+	}
+
+	return c.storage
 }

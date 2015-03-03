@@ -25,6 +25,12 @@ type Config struct {
 			Hosts []string `xml:",any"`
 		}
 	}
+	Storage struct {
+		Strategy string
+		Local    struct {
+			Dir string
+		}
+	}
 	Secret string
 }
 
@@ -34,10 +40,7 @@ func NewConfig() *Config {
 		log.Fatal(err)
 	}
 
-	config := Config{
-		WWWDir:      dir + "/../chest-frontend",
-		HTTPAddress: ":3000",
-	}
+	config := &Config{}
 
 	data, err := ioutil.ReadFile(dir + "/config.xml")
 	if err != nil {
@@ -49,9 +52,10 @@ func NewConfig() *Config {
 		log.Fatalln(err)
 	}
 
-	config.WWWDir = dir + config.WWWDir
+	config.WWWDir = dir + "/" + config.WWWDir
+	config.Storage.Local.Dir = dir + "/" + config.Storage.Local.Dir
 
 	log.Println(config)
 
-	return &config
+	return config
 }

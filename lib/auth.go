@@ -16,12 +16,14 @@ import (
 )
 
 type Auth struct {
-	cache cache.Cacher
+	cache    cache.Cacher
+	appToken string
 }
 
-func NewAuth(c cache.Cacher) *Auth {
+func NewAuth(c cache.Cacher, appToken string) *Auth {
 	return &Auth{
-		cache: c,
+		cache:    c,
+		appToken: appToken,
 	}
 }
 
@@ -37,7 +39,7 @@ func (a *Auth) GenToken() (*model.Token, error) {
 	return token, nil
 }
 
-func (a *Auth) Middleware(next http.Handler) http.Handler {
+func (a *Auth) UserTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		v := req.URL.Query()
 		tokenVal, ok := v["token"]
@@ -50,6 +52,25 @@ func (a *Auth) Middleware(next http.Handler) http.Handler {
 		_, err := a.cache.Get("tok_" + tokenVal[0])
 
 		if err != nil {
+			writeAuthError(res, "Not authorized")
+			return
+		}
+
+		next.ServeHTTP(res, req)
+	})
+}
+
+func (a *Auth) SecretAppTokenMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		v := req.URL.Query()
+		tokenVal, ok := v["token"]
+
+		if !ok {
+			writeAuthError(res, "Not authorized")
+			return
+		}
+
+		if tokenVal[0] != a.appToken {
 			writeAuthError(res, "Not authorized")
 			return
 		}
