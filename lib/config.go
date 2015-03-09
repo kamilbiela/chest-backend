@@ -31,7 +31,8 @@ type Config struct {
 			Dir string
 		}
 	}
-	Secret string
+	Secret       string
+	UploadTmpDir string
 }
 
 func NewConfig() *Config {
@@ -54,6 +55,7 @@ func NewConfig() *Config {
 
 	config.WWWDir = dir + "/" + config.WWWDir
 	config.Storage.Local.Dir = dir + "/" + config.Storage.Local.Dir
+	config.UploadTmpDir = dir + "/uploads_tmp"
 
 	log.Println(config)
 

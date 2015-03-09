@@ -15,7 +15,7 @@ func (l *Local) fullpath(filename string) string {
 	return l.basePath + "/" + filename
 }
 
-func (l *Local) Save(filename string, rc io.ReadCloser) (string, error) {
+func (l *Local) Save(filename string, rc io.Reader) (string, error) {
 	fullpath := l.fullpath(filename)
 	file, err := os.OpenFile(fullpath, os.O_WRONLY|os.O_CREATE, 0666)
 
@@ -24,7 +24,6 @@ func (l *Local) Save(filename string, rc io.ReadCloser) (string, error) {
 	}
 
 	_, err = io.Copy(file, rc)
-	defer rc.Close()
 
 	if err != nil {
 		log.Fatalln(err)

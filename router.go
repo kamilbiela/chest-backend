@@ -21,7 +21,7 @@ func setupRouter(container *lib.Container, r *mux.Router) *mux.Router {
 
 	// @todo add project, branch, travis id build etc
 	// @todo put it in auth middleware
-	r.Handle("/api/artifact", httphandler.ApiPostArtifactHandler(container)).
+	r.Handle("/api/artifact/{filename}", httphandler.ApiPostArtifactHandler(container)).
 		Methods("POST")
 
 	r.Handle("/api/artifact/{filename}", httphandler.ApiGetArtifactHandler(container)).

@@ -1,5 +1,7 @@
 /chest-backend
 /uploads
+.DS_Store
+/uploads_tmp
 
 config.xml
 *.swp

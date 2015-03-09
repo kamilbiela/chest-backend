@@ -5,6 +5,9 @@ import (
 )
 
 type Manager interface {
-	Save(filename string, rc io.ReadCloser) (string, error)
+	// Saves passed file, can change name of file and return new name.
+	Save(filename string, rc io.Reader) (string, error)
+
+	// Get file by filename
 	Get(filename string) (io.ReadCloser, error)
 }

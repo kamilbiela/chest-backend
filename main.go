@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"runtime"
 
 	"github.com/gorilla/mux"
 	"github.com/kamilbiela/chest-backend/lib"
@@ -14,6 +15,7 @@ var isSetup bool
 func init() {
 	flag.BoolVar(&isSetup, "setup", false, "--setup to run app setup (insert sql into db)")
 	flag.Parse()
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
