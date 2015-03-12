@@ -2,6 +2,7 @@ package httphandler
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image"
 	_ "image/gif"
@@ -12,10 +13,16 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dchest/uniuri"
 	"github.com/gorilla/mux"
 	"github.com/kamilbiela/chest-backend/lib"
 	"github.com/nfnt/resize"
 )
+
+type ApiPostArtifactResponse struct {
+	FileId      string
+	ThumbFileId string
+}
 
 func ApiGetArtifactsHandler(container *lib.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -53,15 +60,7 @@ func ApiGetArtifactHandler(container *lib.Container) http.Handler {
 
 func ApiPostArtifactHandler(container *lib.Container) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		params := mux.Vars(r)
-		// @todo clean "filename" variable
-		filename, ok := params["filename"]
-
-		if !ok {
-			log.Println("Not found")
-			w.WriteHeader(400)
-			return
-		}
+		filename := uniuri.NewLen(32)
 
 		// save file to temp directory
 		tmpFilename := container.Config().UploadTmpDir + "/" + filename
@@ -102,7 +101,7 @@ func ApiPostArtifactHandler(container *lib.Container) http.Handler {
 
 		// save image to storage
 		file.Seek(0, 0)
-		_, err = container.Storage().Save(filename, file)
+		savedFileId, err := container.Storage().Save(file)
 
 		if err != nil {
 			w.WriteHeader(400)
@@ -111,7 +110,7 @@ func ApiPostArtifactHandler(container *lib.Container) http.Handler {
 		}
 
 		// save thumb to storage
-		_, err = container.Storage().Save("thumb_"+filename, &buff)
+		savedThumbId, err := container.Storage().Save(&buff)
 
 		if err != nil {
 			w.WriteHeader(400)
@@ -119,7 +118,12 @@ func ApiPostArtifactHandler(container *lib.Container) http.Handler {
 			return
 		}
 
-		w.WriteHeader(200)
+		//@todo save file ids with information about user/branch/project etc into db
+
+		w.Header().Set("Content-Type", "application/json")
+		j, _ := json.Marshal(ApiPostArtifactResponse{FileId: savedFileId, ThumbFileId: savedThumbId})
+		fmt.Fprint(w, string(j))
+
 		return
 	})
 }
