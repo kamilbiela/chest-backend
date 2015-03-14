@@ -10,4 +10,7 @@ type Manager interface {
 
 	// Get file by filename
 	Get(filename string) (io.ReadCloser, error)
+
+	// Delete file by filename
+	Delete(filename string) error
 }

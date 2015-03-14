@@ -26,25 +26,39 @@ func (l *Local) createDir(filename string) error {
 }
 
 func (l *Local) Save(reader io.Reader) (string, error) {
-	// @todo there is small chance of collision, add check for that
-	filename := uniuri.NewLen(32)
-	fullpath := l.fullpath(filename)
+	// get unique filename
+	var filename, fullpath string
+	var err error
+	var file *os.File
+	for tries := 0; ; tries++ {
+		if tries > 10 {
+			panic("Too many tries to save a file")
+		}
+		filename = strings.ToLower(uniuri.NewLen(uniuri.UUIDLen))
+		fullpath = l.fullpath(filename)
 
-	err := l.createDir(filename)
-	if err != nil {
-		log.Fatalln(err)
-	}
+		err = l.createDir(filename)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	file, err := os.OpenFile(fullpath, os.O_WRONLY|os.O_CREATE, 0666)
+		file, err = os.OpenFile(fullpath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+		defer file.Close()
 
-	if err != nil {
-		log.Fatalln(err)
+		if err == nil {
+			break
+		} else {
+			if e, ok := err.(*os.PathError); ok && os.IsNotExist(e.Err) {
+				// @todo log/alert this
+				return "", err
+			}
+		}
 	}
 
 	_, err = io.Copy(file, reader)
 
 	if err != nil {
-		log.Fatalln(err)
+		return "", err
 	}
 
 	return filename, nil
@@ -52,6 +66,10 @@ func (l *Local) Save(reader io.Reader) (string, error) {
 
 func (l *Local) Get(filename string) (io.ReadCloser, error) {
 	return os.Open(l.fullpath(filename))
+}
+
+func (l *Local) Delete(filename string) error {
+	return os.Remove(l.fullpath(filename))
 }
 
 func NewLocal(basePath string) *Local {
